@@ -1,0 +1,132 @@
+package no.torsteinv.MS3.framework.client;
+
+import static java.lang.Math.*;
+import no.torsteinv.MS3.framework.Game;
+
+public class Bitmap {
+	public int width;
+	public int height;
+	public int[] pixels;
+
+	public Bitmap(int width, int height) {
+		this.width = width;
+		this.height = height;
+		pixels = new int[width * height];
+	}
+
+	public static Bitmap createSolidColor(int width, int height, int col) {
+		Bitmap map = new Bitmap(width, height);
+		for (int i = 0; i < width * height; i++)
+			map.pixels[i] = col;
+		return map;
+	}
+
+	public static Bitmap createSolidColorBorder(int width, int height, int col,
+			int colBorder, int borderThickness) {
+		Bitmap map = new Bitmap(width, height);
+		for (int i = 0; i < width; i++)
+			for (int j = 0; j < height; j++)
+				map.pixels[i + j * width] = i <= borderThickness
+						|| j <= borderThickness
+						|| i >= width - borderThickness - 1
+						|| j >= height - borderThickness - 1 ? colBorder : col;
+		return map;
+	}
+
+	public static Bitmap createSolidColorCircle(int size, int col) {
+		Bitmap map = new Bitmap(size, size);
+		for (int i = 0; i < size * size; i++) {
+			int xo = (int) (size / 2 - (i % size));
+			int yo = (int) (size / 2 - ((i - (size / 2 - xo)) / size));
+			if (Math.hypot(xo, yo) < size / 2)
+				map.pixels[i] = col;
+		}
+		return map;
+	}
+
+	public Bitmap HorisontalShift(float shift) {
+		float bitheight = (int) (height * cos(atan(shift)));
+		float bitwidth = (int) (width + shift * bitheight);
+
+		Bitmap Nbit = new Bitmap((int)bitwidth, (int)bitheight);
+		for (float x = 0; x < bitwidth; x++)
+			for (float y = 0; y < bitheight; y++) {
+				float xx = x + y * shift;
+				float yy = y * (bitheight / height);
+				try {
+					Nbit.pixels[(int)x + (int)(y * bitwidth)] = pixels[(int) (xx + yy
+							* width)];
+				} catch (ArrayIndexOutOfBoundsException e) {
+					e.printStackTrace();
+				}
+			}
+		return Nbit;
+	}
+
+	public Bitmap VerticalShift(float shift) {
+		int bitwidth = (int) (height * sin(PI / 4));
+		int bitheight = (int) (height + shift);
+		Bitmap Nbit = new Bitmap(bitwidth, bitheight);
+		for (int x = 0; x < bitwidth; x++)
+			for (int y = 0; y < bitheight; y++) {
+				float xx = x - y * shift;
+				float yy = y - x * shift;
+				try {
+					Nbit.pixels[x + y * bitwidth] = pixels[(int) (xx + yy
+							* width)];
+				} catch (ArrayIndexOutOfBoundsException e) {
+					e.printStackTrace();
+				}
+			}
+		return Nbit;
+	}
+
+	public void render(Game game) {
+
+		for (int y = 0; y < height; y++) {
+			for (int x = 0; x < width; x++) {
+
+				int w = 20;
+				float h = (float) (w * sin(PI / 4));
+
+				float yy = (((y) + Math.abs(game.zOffs) + abs(game.yOffs)) * (Art.tile.height / h))
+						% h;
+				float xx = (float) ((x + (y * 1) + abs(game.xOffs % w) + abs(game.yOffs % w)) % w);
+				// try {
+				pixels[x + y * width] = //((int) (xx * (255 / w)) << 16)
+						//+ ((int) (yy * (255 / h)));
+				 Art.tile.pixels[(int) (xx) + (int) (yy * Art.tile.width)];
+				/*
+				 * } catch (Exception e) { e.printStackTrace(); }
+				 */
+
+			}
+		}
+	}
+
+	public Bitmap clone() {
+		return new Bitmap(width, height).setPixels(pixels);
+	}
+
+	private Bitmap setPixels(int[] pix) {
+		pixels = pix.clone();
+		return this;
+	}
+
+	public void draw(Bitmap b, int xOffs, int yOffs) {
+		for (int x = 0; x < b.width; x++) {
+			int xPix = x + xOffs;
+			if (xPix >= width || xPix <= 0)
+				continue;
+			for (int y = 0; y < b.height; y++) {
+				int yPix = y + yOffs;
+				if (yPix >= height || yPix <= 0)
+					continue;
+				int src = b.pixels[x + y * b.width];
+				if (src > 0)
+					 pixels[xPix + yPix * width] = src;
+			}
+		}
+	}
+
+}

@@ -1,0 +1,15 @@
+package no.torsteinv.MS3.framework;
+
+import javax.swing.JFrame;
+
+public class Start extends JFrame {
+
+	public Start() {
+
+	}
+
+	public static void main(String[] args) {
+		new Start();
+	}
+
+}

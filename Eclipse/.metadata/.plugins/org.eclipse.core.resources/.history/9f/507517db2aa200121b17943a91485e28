@@ -1,0 +1,275 @@
+package no.torsteinv.MS3.framework;
+
+import java.awt.Canvas;
+import java.awt.Graphics;
+import java.awt.Rectangle;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.image.BufferStrategy;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
+import java.util.HashMap;
+
+import javax.swing.JFrame;
+
+import no.torsteinv.MS3.framework.client.Art;
+import no.torsteinv.MS3.framework.client.Bitmap;
+import no.torsteinv.MS3.framework.client.Screen;
+
+public class Component extends Canvas implements Runnable, MouseListener,
+		MouseMotionListener, KeyListener {
+	public static final long serialVersionUID = -5807409324545703837L;
+	public static final int SCALE = 4;
+	public static final int WIDTH = 200;
+	public static final int HEIGHT = 150;
+
+	public Screen screen;
+	public Game game;
+	public boolean running = false;
+	private Thread thread;
+	private BufferedImage img;
+	private int[] pixels;
+	public int mouseX = 0;
+	public int mouseY = 0;
+	public int fps = 0;
+	public HashMap<Rectangle, Integer> buttons = new HashMap<Rectangle, Integer>();
+	public HashMap<Integer, Integer> buttonsType = new HashMap<Integer, Integer>();
+
+	public Component() {
+		screen = new Screen(WIDTH, HEIGHT);
+
+		screen.view.draw(Art.tile, WIDTH / 2, HEIGHT / 2);
+
+		screen.stat.draw(Bitmap.createSolidColor(30, 8, 0x0000ff),
+				2 + (30 + 2) * 0, (8 + 2) * 0);
+		screen.stat.draw(Bitmap.createSolidColor(30, 8, 0x999999),
+				2 + (30 + 2) * 0, (8 + 2) * 1);
+		screen.stat.draw(Bitmap.createSolidColor(30, 8, 0x9999ff),
+				2 + (30 + 2) * 0, (8 + 2) * 2);
+		screen.stat.draw(Bitmap.createSolidColor(30, 8, 0xffff00),
+				2 + (30 + 2) * 0, (8 + 2) * 3);
+
+		screen.stat.draw(Bitmap.createSolidColor(30, 8, 0x999900),
+				2 + (30 + 2) * 1, (8 + 2) * 0);
+		screen.stat.draw(Bitmap.createSolidColor(30, 8, 0x000001),
+				2 + (30 + 2) * 1, (8 + 2) * 1);
+		screen.stat.draw(Bitmap.createSolidColor(30, 8, 0x999999),
+				2 + (30 + 2) * 1, (8 + 2) * 2);
+		screen.stat.draw(Bitmap.createSolidColor(30, 8, 0x999999),
+				2 + (30 + 2) * 1, (8 + 2) * 3);
+
+		buttons.put(new Rectangle(2 + (30 + 2) * 0, (8 + 2) * 0
+				+ Component.HEIGHT - Screen.statheight, 30, 8), 0);
+		buttons.put(new Rectangle(2 + (30 + 2) * 0, (8 + 2) * 1
+				+ Component.HEIGHT - Screen.statheight, 30, 8), 1);
+		buttons.put(new Rectangle(2 + (30 + 2) * 0, (8 + 2) * 2
+				+ Component.HEIGHT - Screen.statheight, 30, 8), 2);
+		buttons.put(new Rectangle(2 + (30 + 2) * 0, (8 + 2) * 3
+				+ Component.HEIGHT - Screen.statheight, 30, 8), 3);
+
+		buttons.put(new Rectangle(2 + (30 + 2) * 1, (8 + 2) * 0
+				+ Component.HEIGHT - Screen.statheight, 30, 8), 10);
+		buttons.put(new Rectangle(2 + (30 + 2) * 1, (8 + 2) * 1
+				+ Component.HEIGHT - Screen.statheight, 30, 8), 11);
+		buttons.put(new Rectangle(2 + (30 + 2) * 1, (8 + 2) * 2
+				+ Component.HEIGHT - Screen.statheight, 30, 8), 12);
+		buttons.put(new Rectangle(2 + (30 + 2) * 1, (8 + 2) * 3
+				+ Component.HEIGHT - Screen.statheight, 30, 8), 13);
+
+		buttonsType.put(0, 0x0000ff);
+		buttonsType.put(1, 0x999999);
+		buttonsType.put(2, 0x9999ff);
+		buttonsType.put(3, 0xffff00);
+
+		buttonsType.put(10, 0x999900);
+		buttonsType.put(11, 0x000001);
+		buttonsType.put(12, 0x999999);
+		buttonsType.put(13, 0x999999);
+
+		game = new Game();
+		img = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
+		pixels = ((DataBufferInt) img.getRaster().getDataBuffer()).getData();
+	}
+
+	public static void main(String[] args) {
+		JFrame f = new JFrame("Escape!");
+		Component c = new Component();
+		c.addMouseListener(c);
+		c.addMouseMotionListener(c);
+		f.addKeyListener(c);
+		f.add(c);
+		f.pack();
+		f.setResizable(false);
+		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		f.setSize(WIDTH * SCALE + 5, HEIGHT * SCALE + 25);
+
+		c.start();
+
+		f.setVisible(true);
+	}
+
+	public synchronized void start() {
+		if (running)
+			return;
+		running = true;
+		thread = new Thread(this);
+		thread.start();
+	}
+
+	public synchronized void stop() {
+		if (!running)
+			return;
+		running = false;
+		try {
+			thread.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void run() {
+		long lastTime = System.currentTimeMillis();
+
+		while (running) {
+
+			render();
+			fps++;
+			tick();
+			while (System.currentTimeMillis() - lastTime > 1000) {
+
+				System.out.println(fps + " fps");
+				lastTime += 1000;
+				fps = 0;
+			}
+		}
+	}
+
+	private void tick() {
+		game.tick(screen, this);
+	}
+
+	private void render() {
+		BufferStrategy bs = getBufferStrategy();
+		if (bs == null) {
+			this.createBufferStrategy(3);
+			return;
+		}
+
+		screen.render(game);
+
+		for (int i = 0; i < WIDTH * HEIGHT; i++) {
+			pixels[i] = screen.pixels[i];
+		}
+		Graphics g = bs.getDrawGraphics();
+		g.drawImage(img, 0, 0, WIDTH * SCALE, HEIGHT * SCALE, null);
+		g.dispose();
+		bs.show();
+
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		int x = e.getX() / SCALE;
+		int y = e.getY() / SCALE;
+		int m = e.getButton();
+		doShitMouse(x, y, m);
+		e.consume();
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void mouseExited(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		int x = e.getX() / SCALE;
+		int y = e.getY() / SCALE;
+		int m = e.getButton();
+		doShitMouse(x, y, m);
+		e.consume();
+	}
+
+	public void doShitMouse(int x, int y, int m) {
+
+		screen.view.draw(Art.tile, x, y);
+
+		// if (y > screen.view.height) {
+		// int i = -1;
+		// for (Rectangle r : buttons.keySet())
+		// if (r.contains(x, y))
+		// i = buttons.get(r);
+		// if (m == MouseEvent.BUTTON1)
+		// game.leftSelected = i == -1 ? game.leftSelected : i;
+		// else if(m != MouseEvent.BUTTON2)
+		// game.rightSelected = i == -1 ? game.rightSelected : i;
+		// return;
+		// }
+		// screen.view.draw(Bitmap.createSolidColorCircle(5, m ==
+		// MouseEvent.BUTTON1 ? buttonsType
+		// .get(game.leftSelected)
+		// : m != MouseEvent.BUTTON2 ? buttonsType
+		// .get(game.rightSelected) : 0), x - 2, y - 2);
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void mouseDragged(MouseEvent e) {
+		int x = e.getX() / SCALE;
+		int y = e.getY() / SCALE;
+		int m = e.getModifiers() >> 4;
+		doShitMouse(x, y, m);
+		e.consume();
+	}
+
+	@Override
+	public void mouseMoved(MouseEvent e) {
+		mouseX = e.getX();
+		mouseY = e.getY();
+	}
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+		switch (e.getKeyCode()) {
+		case KeyEvent.VK_UP: game.zOffs++;
+			break;
+		case KeyEvent.VK_DOWN: game.zOffs--;
+			break;
+		case KeyEvent.VK_LEFT: game.xOffs++;
+			break;
+		case KeyEvent.VK_RIGHT: game.xOffs--;
+			break;
+		case KeyEvent.VK_Q: game.yOffs++;
+			break;
+		case KeyEvent.VK_E: game.yOffs--;
+			break;
+		}
+		e.consume();
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+		e.consume();
+	}
+
+	@Override
+	public void keyTyped(KeyEvent e) {
+		e.consume();
+	}
+}

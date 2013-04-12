@@ -1,0 +1,16 @@
+package no.torsteinv.MS3.framework;
+
+import no.torsteinv.MS3.framework.client.Screen;
+
+public class Game {
+
+	public int timeMillis = 0;
+	public int leftSelected = 2;
+	public int rightSelected = 1;
+
+	public void tick(Screen s,Component c) {
+		timeMillis += c.fps;
+
+	}
+
+}

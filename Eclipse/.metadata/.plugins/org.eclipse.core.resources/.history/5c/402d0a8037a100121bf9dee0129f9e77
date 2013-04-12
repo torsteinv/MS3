@@ -1,0 +1,19 @@
+package no.torsteinv.MS3.framework;
+
+import javax.swing.JFrame;
+
+public class Start extends JFrame {
+
+	private static final long serialVersionUID = -4127346173317948540L;
+
+	public Start() {
+		setName("Mars Settlement 3");
+		
+		setVisible(true);
+	}
+
+	public static void main(String[] args) {
+		new Start();
+	}
+
+}

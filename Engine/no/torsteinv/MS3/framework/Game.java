@@ -1,0 +1,18 @@
+package no.torsteinv.MS3.framework;
+
+import no.torsteinv.MS3.framework.client.Screen;
+
+public class Game {
+
+	public int timeMillis = 0;
+	public int fps = 0;
+	public int zOffs = 0;
+	public int xOffs = 0;
+	public int yOffs = 0;
+
+	public void tick(Screen s, Component c) {
+		fps = c.fps;
+		timeMillis += fps;
+	}
+
+}

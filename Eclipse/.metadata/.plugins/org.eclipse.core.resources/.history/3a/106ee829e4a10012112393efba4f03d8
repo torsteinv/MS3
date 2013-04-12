@@ -1,0 +1,16 @@
+package no.torsteinv.MS3.framework;
+
+import no.torsteinv.Bitmaps.gui.Screen;
+
+public class Game {
+
+	public int time = 0;
+	public int leftSelected = 2;
+	public int rightSelected = 1;
+
+	public void tick(Screen s) {
+		time++;
+
+	}
+
+}

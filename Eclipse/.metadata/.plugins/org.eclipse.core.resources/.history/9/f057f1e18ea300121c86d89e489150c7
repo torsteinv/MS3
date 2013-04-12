@@ -1,0 +1,47 @@
+package no.torsteinv.MS3.framework.client;
+
+import no.torsteinv.MS3.framework.Component;
+import no.torsteinv.MS3.framework.Game;
+
+public class Screen extends Bitmap {
+	public static final int statheight = (int) (184 / Component.SCALE);
+	public Bitmap view = new Bitmap(Component.WIDTH, Component.HEIGHT
+			- statheight);
+	public Bitmap stat = Bitmap.createSolidColor(Component.WIDTH, statheight,
+			0x00ff00);
+	public Bitmap black = Bitmap.createSolidColor(20, 20, 0);
+	public Bitmap test = Bitmap.createSolidColorBorder(20, 20, 0xFF00FF,
+			0x00FF00, 1);
+	public Bitmap selectRight = new Bitmap(30, 8);
+	public Bitmap selectLeft = new Bitmap(30, 8);
+	public Bitmap selectMixed = new Bitmap(30, 8);
+
+	public Screen(int width, int height) {
+		super(width, height);
+		for (int i = 0; i < 8 * 30; i++) {
+			selectRight.pixels[i] = (i % 30 == 0 || i % 30 == 29) ? 0x0000ff
+					: 0;
+			selectLeft.pixels[i] = (i % 30 == 0 || i % 30 == 29) ? 0xff0000 : 0;
+			selectMixed.pixels[i] = (i % 30 == 0 || i % 30 == 29) ? 0xff00ff
+					: 0;
+		}
+	}
+
+	public void render(Game game) {
+		for (int i = 0; i < width * height; i++) {
+			pixels[i] = 0;
+		}
+
+		view.render(game);
+		draw(view, 0, 0);
+		draw(test.HorisontalShift(game.xOffs/ 10), 20 - game.xOffs - game.zOffs, 20 - game.zOffs + game.yOffs);
+		draw(stat, 0, Component.HEIGHT - statheight);
+		draw(selectRight, 2, (8 + 2) * game.rightSelected + Component.HEIGHT
+				- statheight);
+		draw(selectLeft, 2, (8 + 2) * game.leftSelected + Component.HEIGHT
+				- statheight);
+		if (game.leftSelected == game.rightSelected)
+			draw(selectMixed, 2, (8 + 2) * game.leftSelected + Component.HEIGHT
+					- statheight);
+	}
+}

@@ -1,0 +1,52 @@
+package no.torsteinv.MS3.framework;
+
+import javax.swing.JFrame;
+
+public class Start extends JFrame implements Runnable{
+
+	private static final long serialVersionUID = -4127346173317948540L;
+
+	
+	
+	public Start() {
+		setTitle("Mars Settlement 3");
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setSize(800,600);
+		setResizable(false);
+		
+		Thread th = new Thread(this);
+		th.start();
+		
+		setVisible(true);
+	}
+
+	public static void main(String[] args) {
+		new Start();
+	}
+
+	@Override
+	public void run() {
+		Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+		while(true){
+			update();
+			render();
+			try{
+				Thread.sleep(20);
+			}catch(InterruptedException e){
+				e.printStackTrace();
+			}
+			Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
+		}
+	}
+
+	private void render() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void update() {
+		// TODO Auto-generated method stub
+		
+	}
+
+}
